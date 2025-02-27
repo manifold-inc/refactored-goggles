@@ -132,7 +132,8 @@ func loadPrivateKey(path string) (*ecdsa.PrivateKey, error) {
 
 	masterPrivateKey, _ := bip32.NewMasterKey(seed)
 	masterPublicKey := masterPrivateKey.PublicKey()
-	fmt.Printf("Public Key: %s\n", masterPublicKey)
+	publicKeyBytes, _ := masterPublicKey.Serialize()
+	fmt.Printf("Public Key: %x\n", publicKeyBytes)
 	ecdaPrivateKey := ethcrypto.ToECDSAUnsafe(masterPrivateKey.Key)
 	return ecdaPrivateKey, nil
 }
