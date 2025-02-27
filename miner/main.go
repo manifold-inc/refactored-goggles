@@ -134,8 +134,8 @@ func loadPrivateKey(path string) (*ecdsa.PrivateKey, error) {
 
 	ecdaPrivateKey := ethcrypto.ToECDSAUnsafe(masterPrivateKey.Key)
 	ecdaPublicKey := ecdaPrivateKey.Public().(*ecdsa.PublicKey)
-	publicKeyHex := fmt.Sprintf("%x", ethcrypto.CompressPubkey(ecdaPublicKey))
-	fmt.Printf("Public Key: %x\n", publicKeyHex)
+	address := ethcrypto.PubkeyToAddress(*ecdaPublicKey)
+	fmt.Println("address：", address.Hex())
 	return ecdaPrivateKey, nil
 }
 
