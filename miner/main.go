@@ -131,10 +131,11 @@ func loadPrivateKey(path string) (*ecdsa.PrivateKey, error) {
 	seed := bip39.NewSeed(mnemonic, "green glass bar")
 
 	masterPrivateKey, _ := bip32.NewMasterKey(seed)
-	masterPublicKey := masterPrivateKey.PublicKey()
-	publicKeyBytes, _ := masterPublicKey.Serialize()
-	fmt.Printf("Public Key: %x\n", publicKeyBytes)
+
 	ecdaPrivateKey := ethcrypto.ToECDSAUnsafe(masterPrivateKey.Key)
+	ecdaPublicKey := ecdaPrivateKey.Public().(*ecdsa.PublicKey)
+	publicKeyHex := fmt.Sprintf("%x", ethcrypto.CompressPubkey(ecdaPublicKey))
+	fmt.Printf("Public Key: %x\n", publicKeyHex)
 	return ecdaPrivateKey, nil
 }
 
