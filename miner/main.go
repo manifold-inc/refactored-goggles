@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -12,6 +13,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 	"github.com/labstack/echo/v4"
@@ -47,10 +49,27 @@ type GPUInfo struct {
 	GPUType string `json:"gpu_type"`
 }
 
+func stopServer(c echo.Context) error {
+	err := c.Echo().Shutdown(context.Background())
+	if err != nil {
+		if err != http.ErrServerClosed {
+			c.Echo().Logger.Fatal("shutting down the server")
+		}
+	}
+	return nil
+}
+
 func main() {
+	init := nvml.Init()
+	if init != nvml.SUCCESS {
+		log.Fatalf("Goggles requires nvidia container toolkit installed")
+	}
+	mutex := sync.Mutex{}
 	e := echo.New()
 	e.Logger.SetOutput(io.Discard)
 	e.POST("/", func(c echo.Context) error {
+		mutex.Lock()
+		defer mutex.Unlock()
 		hello7 := generatePart7()
 		var request struct {
 			Nonce string `query:"nonce"`
@@ -59,7 +78,8 @@ func main() {
 		hello9 := generatePart9()
 		ret := nvml.Init()
 		if ret != nvml.SUCCESS {
-			return c.JSON(http.StatusInternalServerError, fmt.Sprintf("Unable to initialize NVML: %v", nvml.ErrorString(ret)))
+			defer stopServer(c)
+			return c.JSON(http.StatusInternalServerError, fmt.Sprintf("Unable to initialize NVML: %v, shutting down goggles", nvml.ErrorString(ret)))
 		}
 		hello8 := generatePart8()
 		defer func() {
